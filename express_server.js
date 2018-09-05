@@ -10,8 +10,14 @@ var PORT = 8080;
 app.set("view engine", "ejs")
 
 var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  "b2xVn2":{
+  shortURL: "b2xVn2",
+  longURL: "http://www.lighthouselabs.ca"
+},
+  "9sm5xK":{
+  shortURL:"9sm5xK",
+  longURL:"http://www.google.com"
+ }
 };
 
 const users = {
@@ -51,12 +57,17 @@ app.get("/hello", (req, res) => {
 
 //renders index page
 app.get("/urls", (req, res) => {
+
   let user = users[req.cookies["user_id"]];
   let templateVars = { urls: urlDatabase, user: user };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
+  if(req.cookies["user_id"] === undefined){;
+    res.redirect("/login");
+    return
+  }
   let user = users[req.cookies["user_id"]];
   let templateVars = {user: user};
   res.render("urls_new", templateVars);
@@ -103,6 +114,7 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls");
 });
 
+
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.long_url;
   res.redirect("/urls");
@@ -132,6 +144,10 @@ app.post("/logout", (req, res) => {
 
 
 app.post("/urls/:id/delete", (req, res) => {
+  if(req.cookies["user_id"] === undefined){;
+    res.redirect("/login");
+    return
+  }
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
@@ -143,11 +159,15 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL, templateVars);
 });
 
+//update route
 app.get("/urls/:id", (req, res) => {
+   if(req.cookies["user_id"] === undefined){;
+    res.redirect("/login");
+    return
+  }
   let user = users[req.cookies["user_id"]];
   let templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id], user: user };
   res.render("urls_show", templateVars);
-  res.render("/urls/:id", templateVars);
 });
 
 function generateRandomString2() {

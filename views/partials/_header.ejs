@@ -1,7 +1,7 @@
 <div align="center">
 
 <% if(user){ %>
-    <p>Logged in as: <strong><%= user %></strong></p>
+    <p>Logged in as: <strong><%= user.email %></strong></p>
     <form action="/logout" method="POST" style="margin: 25px">
       <button type="submit">Logout</button>
     </form>
