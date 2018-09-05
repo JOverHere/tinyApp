@@ -1,23 +1,14 @@
 <div align="center">
 
-
-<div>
- <%  if(!username){ %>
-    <form action="/login" method="POST">
-    <label for="name">Login</label>
-    <input type="text" name="username" placeholder="Type your username here">
-     <button type="submit"> Click me! </button>
-   </form>
- <% } else { %>
- <form action="/logout" method="POST">
-    <label for="name">Welcome back <strong> <%= username %> </strong>!</label>
-     <button type="submit"> Logout </button>
-   </form>
-<% } %>
-  </div>
-</div>
-
-
+<% if(user){ %>
+    <p>Logged in as: <strong><%= user %></strong></p>
+    <form action="/logout" method="POST" style="margin: 25px">
+      <button type="submit">Logout</button>
+    </form>
+  <% } else {%>
+    <a href="/login" style="margin-bottom:20px">Login</a>
+    <a href="/register">Register!</a>
+  <% } %>
 
 
 

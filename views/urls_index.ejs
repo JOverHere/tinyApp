@@ -10,14 +10,14 @@
 
 <h1>MY APP</h1>
 
- <ul>
+
        <% for(url in urls){ %>
         <li><%= urls[url] + ": " + url%><a href="/urls/<%= url %>">Edit</a> <form method="POST" action="/urls/<%= url%>/delete"><button>Delete short URL</button></form></li>
     <% }; %>
 
 
 
-</ul>
+
 
 <h2>Shorten URL here:</h2>
 <form action="/urls/new" method= "POST">
