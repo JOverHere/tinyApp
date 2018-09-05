@@ -1,5 +1,24 @@
 <div align="center">
-<h4>I'm the header, ignore me</h4>
+
+
+<div>
+ <%  if(!username){ %>
+    <form action="/login" method="POST">
+    <label for="name">Login</label>
+    <input type="text" name="username" placeholder="Type your username here">
+     <button type="submit"> Click me! </button>
+   </form>
+ <% } else { %>
+ <form action="/logout" method="POST">
+    <label for="name">Welcome back <strong> <%= username %> </strong>!</label>
+     <button type="submit"> Logout </button>
+   </form>
+<% } %>
+  </div>
 </div>
+
+
+
+
 
 

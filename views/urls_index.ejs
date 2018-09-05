@@ -3,6 +3,7 @@
 <html lang="en">
 <head>
   <title>TinyApp</title>
+  <%- include ./partials/_header.ejs %>
 </head>
 <body>
 
@@ -19,7 +20,9 @@
 </ul>
 
 <h2>Shorten URL here:</h2>
+<form action="/urls/new" method= "POST">
 <button href=#>Shorten Me</button>
+</form>
 
 
   </body>
