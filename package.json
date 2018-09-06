@@ -10,10 +10,12 @@
   "author": "Jenna Woodley",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^2.0.0",
     "body-parser": "^1.18.3",
     "cookie-parser": "^1.4.3",
     "ejs": "^2.6.1",
-    "express": "^4.16.3"
+    "express": "^4.16.3",
+    "node-gyp": "^3.8.0"
   },
   "devDependencies": {
     "nodemon": "^1.18.4"

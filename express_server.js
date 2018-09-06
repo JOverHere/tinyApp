@@ -1,5 +1,6 @@
 var express = require("express");
-var cookieParser = require('cookie-parser')
+var cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 var app = express();
 app.use(cookieParser());
 
@@ -9,23 +10,33 @@ app.use(bodyParser.urlencoded({extended: true}));
 var PORT = 8080;
 app.set("view engine", "ejs")
 
-var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+
+
+const urlDatabase = {
+  "bV2xn2":{
+    id: "userRandomID",
+    longURL: "http://www.lighthouselabs.ca"
+  },
+  "9sm5xK":{
+    id: "user2RandomID",
+    longURL: "http://www.google.com"
+  }
 };
 
 const users = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur"
+    password: "1010"
   },
  "user2RandomID": {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk"
+    password: "2020"
   }
 }
+
+
 
 app.get("/", (req, res) => {
   let user = users[req.cookies["user_id"]];
@@ -78,6 +89,7 @@ app.get("/login", (req, res) => {
 });
 
 
+
 //post route for registration form
 app.post("/register", (req, res) => {
  if( !req.body.email || !req.body.password){
@@ -90,7 +102,9 @@ app.post("/register", (req, res) => {
    return
  }
  const userID = generateRandomString2();
- users[userID] = {id: userID, email: req.body.email , password: req.body.password};
+ const password = req.body.password;
+ const hashedPassword = bcrypt.hashSync(password, 10);
+ users[userID] = {id: userID, email: req.body.email , password: hashedPassword};
  res.cookie("user_id", userID);
  res.redirect("/urls")
 })
@@ -110,17 +124,19 @@ app.post("/urls/:id", (req, res) => {
 //login form
 app.post("/login", (req, res) => {
   if(!findEmail(req.body.email)){
-  res.status(403);
-  res.send("OOPS your bad... turn around buddy.. try again")
-  return
- } else if(!findPassword(req.body.password)){
-   res.status(403)
-   res.send("Already exists")
-   return
- }
-  //let user = users[req.cookies["user_id"]];
-  res.cookie("user_id", getID(req.body.email));
-  res.redirect("/");
+    res.status(403);
+    res.send("E-mail does not exist.");
+  } else {
+    let user = findUser(req.body.email)
+
+    if (bcrypt.compareSync(req.body.password, user.password)) {
+      res.cookie("user_id", user.id);
+      res.redirect("/");
+    } else{
+      res.status(403);
+      res.send("Invalid e-mail or password.");
+    }
+  }
 });
 
 //logout to clear cookies
@@ -152,7 +168,6 @@ app.get("/urls/:id", (req, res) => {
 function generateRandomString2() {
   var randomStr = "";
   var alphaNum ="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
  for(var i = 0; i < 3; i++){
    randomStr += alphaNum.charAt(Math.floor(Math.random() * alphaNum.length));
  }
@@ -165,12 +180,10 @@ generateRandomString2()
 function generateRandomString() {
   var randomStr = "";
   var alphaNum ="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
  for(var i = 0; i < 6; i++){
    randomStr += alphaNum.charAt(Math.floor(Math.random() * alphaNum.length));
  }
  return randomStr
- console.log(randomStr)
 }
 generateRandomString()
 
@@ -180,27 +193,19 @@ function findEmail(email) {
    if(users[userID].email === email){
     return true;
    }
- }
+  }
  return false
 };
 
-function findPassword(password) {
- for(var pass in users){
-   if(users[pass].password === password){
-    return true;
-   }
+function findUser(email){
+ for (let user in users){
+  if(users[user].email === email){
+   return users[user];
+  }
  }
- return false
-};
+ return false;
+}
 
-function getID(email) {
- for(var id in users){
-   if(users[id].email === email){
-    return id
-   }
- }
- return false
-};
 
 //if (findEmail("some@email.com")) { do something... }
 
