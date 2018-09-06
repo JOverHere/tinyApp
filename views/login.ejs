@@ -1,13 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>TinyApp</title>
+  <%- include ./partials/_header.ejs %>
+</head>
+
+<body>
+
+
 <div align="center">
 
 
-<div>
- <form action="/login" method="POST" style="margin:150px;">
-  <label >Enter your email: </label>
-    <input type="email" method="POST" name="email" placeholder="www.example.com" style="width: 300px">
-     <input type="password" method="POST" name="password" placeholder="******" style="width: 300px">
-    <button type="submit">Submit</button>
+<% if (!user) {%>
+ <form action="/login" method="POST">
+  <label for="name">Login:</label>
+  <input type="text" name="email" placeholder="email">
+  <input type="password" name="password" placeholder="password">
+  <button type="submit">Login</button>
+</form>
+  <%} else {%>
+  <p> Welcome back: <strong><%= user.email%></strong></p>
+  <form action="/logout" method="POST">
+    <button type="submit"> Logout </button>
   </form>
+  <% }%>
 
-  </div>
 </div>
+
+</body>
+</html>
+
+
+
