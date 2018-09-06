@@ -10,14 +10,16 @@ var PORT = 8080;
 app.set("view engine", "ejs")
 
 var urlDatabase = {
-  "b2xVn2":{
-  shortURL: "b2xVn2",
-  longURL: "http://www.lighthouselabs.ca"
-},
+  "b2xVn2": {
+    id: "b2xVn2",
+    user_id: "userRandomID",
+    longURL: "http://www.lighthouselabs.ca"
+  },
   "9sm5xK":{
-  shortURL:"9sm5xK",
-  longURL:"http://www.google.com"
- }
+    id: "9sm5xK",
+    user_id:"user2RandomID",
+    longURL:"http://www.google.com"
+  }
 };
 
 const users = {
@@ -41,10 +43,9 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls.json", (req, res) => {
-  let user = users[req.cookies["user_id"]];
-  let templateVars = {user: user};
-  res.json(urlDatabase);
-  res.render("/urls.json", templateVars);
+  const user = users[req.cookies["user_id"]]
+  const urls = urlsForUser(user.id)
+  res.json(urls);
 });
 
 //render home page
@@ -57,9 +58,9 @@ app.get("/hello", (req, res) => {
 
 //renders index page
 app.get("/urls", (req, res) => {
-
-  let user = users[req.cookies["user_id"]];
-  let templateVars = { urls: urlDatabase, user: user };
+  const user = users[req.cookies["user_id"]]
+  const urls = urlsForUser(user.id)
+  let templateVars = { urls: urls , user: user };
   res.render("urls_index", templateVars);
 });
 
@@ -110,7 +111,8 @@ app.post("/register", (req, res) => {
 //updates long url w new little random string
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {id: req.cookies["user_id"], longURL: req.body.longURL};
+  console.log(urlDatabase);
   res.redirect("/urls");
 });
 
@@ -144,12 +146,13 @@ app.post("/logout", (req, res) => {
 
 
 app.post("/urls/:id/delete", (req, res) => {
-  if(req.cookies["user_id"] === undefined){;
+  if(users[req.cookies["user_id"]].id !== findID(req.cookies["user_id"])){
     res.redirect("/login");
     return
   }
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
+
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -161,13 +164,15 @@ app.get("/u/:shortURL", (req, res) => {
 
 //update route
 app.get("/urls/:id", (req, res) => {
-   if(req.cookies["user_id"] === undefined){;
-    res.redirect("/login");
-    return
+  const user = users[req.cookies["user_id"]];
+  const url = findUrl(req.params.id, user)
+  if (url) {
+    const templateVars = { shortURL: url.id, longURL: url.longURL, user: user };
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(404).send("Not Found")
   }
-  let user = users[req.cookies["user_id"]];
-  let templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id], user: user };
-  res.render("urls_show", templateVars);
+
 });
 
 function generateRandomString2() {
@@ -201,7 +206,8 @@ function findEmail(email) {
    if(users[userID].email === email){
     return true;
    }
- } return false
+ }
+ return false
 };
 
 function findPassword(password) {
@@ -209,16 +215,47 @@ function findPassword(password) {
    if(users[pass].password === password){
     return true;
    }
- } return false
+ }
+  return false
 };
 
+
+//retrieving id in db via email
 function getID(email) {
  for(var id in users){
    if(users[id].email === email){
     return id
    }
- } return false
+ }
+ return false
 };
+
+// finding user id in db
+function findID(userID) {
+ for(var id in urlDatabase){
+   if(userID === urlDatabase[id].id){
+    return urlDatabase[id].id;
+   }
+ }
+ return false
+};
+
+// searching db for user specific urls
+function urlsForUser(user_id){
+  return Object
+           .values(urlDatabase)
+           .filter(url => url.user_id === user_id)
+
+};
+
+const findUrl = (id, user) => {
+  // if (urlDatabase[id].user_id === user.id) {
+  //   return urlDatabase[id]
+  // } else {
+  //   return null
+  // }
+  return urlDatabase[id] && urlDatabase[id].user_id === user.id ? urlDatabase[id] : null
+}
 
 //if (findEmail("some@email.com")) { do something... }
 
