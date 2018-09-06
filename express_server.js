@@ -12,12 +12,10 @@ app.set("view engine", "ejs")
 var urlDatabase = {
   "b2xVn2": {
     id: "b2xVn2",
-    user_id: "userRandomID",
     longURL: "http://www.lighthouselabs.ca"
   },
   "9sm5xK":{
     id: "9sm5xK",
-    user_id:"user2RandomID",
     longURL:"http://www.google.com"
   }
 };
@@ -38,13 +36,10 @@ const users = {
 app.get("/", (req, res) => {
   let user = users[req.cookies["user_id"]];
   let templateVars = {user: user};
-  res.send("Hello!");
-  res.render("/", templateVars);
+  res.render("", templateVars);
 });
 
 app.get("/urls.json", (req, res) => {
-  const user = users[req.cookies["user_id"]]
-  const urls = urlsForUser(user.id)
   res.json(urls);
 });
 
@@ -59,8 +54,11 @@ app.get("/hello", (req, res) => {
 //renders index page
 app.get("/urls", (req, res) => {
   const user = users[req.cookies["user_id"]]
+  if(user === undefined){
+    res.redirect("login")
+  }
   const urls = urlsForUser(user.id)
-  let templateVars = { urls: urls , user: user };
+  let templateVars = { urls: urlsForUser(req.cookies["user_id"]) , user: user };
   res.render("urls_index", templateVars);
 });
 
@@ -80,7 +78,9 @@ app.post("/urls/new", (req, res) => {
 
 //renders registration form
 app.get("/register", (req, res) => {
-res.render("registration");
+  let user = users[req.cookies["user_id"]];
+  let templateVars = {user: user};
+res.render("registration", templateVars);
 });
 
 //get login page
@@ -112,13 +112,16 @@ app.post("/register", (req, res) => {
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = {id: req.cookies["user_id"], longURL: req.body.longURL};
-  console.log(urlDatabase);
   res.redirect("/urls");
 });
 
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.long_url;
+   if(req.cookies["user_id"] === undefined){;
+    res.redirect("/login");
+    return
+  }
+  urlDatabase[req.params.id].longURL = req.body.long_url;
   res.redirect("/urls");
 });
 
@@ -135,7 +138,7 @@ app.post("/login", (req, res) => {
  }
   //let user = users[req.cookies["user_id"]];
   res.cookie("user_id", getID(req.body.email));
-  res.redirect("/");
+  res.redirect("/urls");
 });
 
 //logout to clear cookies
@@ -146,7 +149,7 @@ app.post("/logout", (req, res) => {
 
 
 app.post("/urls/:id/delete", (req, res) => {
-  if(users[req.cookies["user_id"]].id !== findID(req.cookies["user_id"])){
+  if(users[req.cookies["user_id"]].id !== findID(req.cookies["user_id"], urlsForUser(req.cookies["user_id"]))){
     res.redirect("/login");
     return
   }
@@ -158,22 +161,32 @@ app.post("/urls/:id/delete", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   let user = users[req.cookies["user_id"]];
   let templateVars = {user: user};
-  let longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL, templateVars);
+  let longURL2 = urlDatabase[req.params.shortURL].longURL;
+  res.redirect(longURL2);
 });
 
 //update route
 app.get("/urls/:id", (req, res) => {
-  const user = users[req.cookies["user_id"]];
-  const url = findUrl(req.params.id, user)
-  if (url) {
-    const templateVars = { shortURL: url.id, longURL: url.longURL, user: user };
-    res.render("urls_show", templateVars);
+  if(req.cookies["user_id"] === undefined){
+    res.redirect("/login");
+  } else if (users[req.cookies["user_id"]].id !== findID(req.cookies["user_id"], urlsForUser(req.cookies["user_id"]))){
+    res.redirect("/login");
   } else {
-    res.status(404).send("Not Found")
+    let user = users[req.cookies["user_id"]];
+    let templateVars = { shortURL: req.params.id, longURL: urlDatabase[req.params.id].longURL, user: user};
+    res.render("urls_show", templateVars)
   }
-
 });
+//   const user = users[req.cookies["user_id"]];
+//   const url = findUrl(req.params.id, user)
+//   if (url) {
+//     const templateVars = { shortURL: url.id, longURL: url.longURL, user: user };
+//     res.render("urls_show", templateVars);
+//   } else {
+//     res.status(404).send("Not Found")
+//   }
+
+// });
 
 function generateRandomString2() {
   var randomStr = "";
@@ -231,31 +244,41 @@ function getID(email) {
 };
 
 // finding user id in db
-function findID(userID) {
- for(var id in urlDatabase){
-   if(userID === urlDatabase[id].id){
-    return urlDatabase[id].id;
+function findID(userID, db) {
+ for(var id in db){
+   if(userID === db[id].id){
+    return db[id].id;
    }
  }
  return false
 };
 
 // searching db for user specific urls
-function urlsForUser(user_id){
-  return Object
-           .values(urlDatabase)
-           .filter(url => url.user_id === user_id)
+// function urlsForUser(user_id){
+//   return Object
+//            .values(urlDatabase)
+//            .filter(url => url.user_id === user_id)
 
-};
+// };
 
-const findUrl = (id, user) => {
-  // if (urlDatabase[id].user_id === user.id) {
-  //   return urlDatabase[id]
-  // } else {
-  //   return null
-  // }
-  return urlDatabase[id] && urlDatabase[id].user_id === user.id ? urlDatabase[id] : null
+function urlsForUser(id){
+  const specific = {};
+  for(let spec in urlDatabase){
+    if(urlDatabase[spec].id === id){
+      specific[spec]= urlDatabase[spec]
+    }
+  }
+  return specific
 }
+
+// const findUrl = (id, user) => {
+//   // if (urlDatabase[id].user_id === user.id) {
+//   //   return urlDatabase[id]
+//   // } else {
+//   //   return null
+//   // }
+//   return urlDatabase[id] && urlDatabase[id].user_id === user.id ? urlDatabase[id] : null
+// }
 
 //if (findEmail("some@email.com")) { do something... }
 
